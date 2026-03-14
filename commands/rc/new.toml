@@ -1,0 +1,85 @@
+description = "Create a new Rocket.Chat App from a natural language description"
+
+prompt = """
+The user wants to build a Rocket.Chat App. Their description:
+
+{{args}}
+
+─── YOUR APPROACH ───
+
+1. UNDERSTAND what they want. If the description is vague (e.g. "stock price app", "welcome bot"), that's fine — use the feature map below to figure out what RC features are needed. Only ask follow-up questions in simple, non-technical language if you truly cannot guess the app's purpose. Example questions:
+   - "Should the app respond when someone types a command, or automatically when something happens?"
+   - "Does it need to remember anything for later?"
+   - "Does it need to talk to an outside service?"
+
+2. PLAN the app. Present a short, plain-language summary:
+   "Here's what I'll build:
+   • App name: <name>
+   • What it does: <one-liner>
+   • Features: <plain english list, e.g. 'A /stock command you type to get prices', 'Calls an external stock API', 'A settings page for your API key'>
+   Sound good?"
+
+3. WAIT for confirmation. Only start coding after a positive reply.
+
+4. BUILD the app:
+   a. Run `rc-apps create --name="<name>" --description="<desc>" --author="<name>"` in the current directory.
+      For author: use the authenticated Gemini user's name. If unavailable, use "Developer".
+   b. Run `npm install` in the created project directory.
+   c. Write all the code — slash commands, modals, endpoints, event handlers, persistence, settings — whatever the app needs.
+   d. Register everything in `extendConfiguration` in the main App class.
+
+5. VERIFY by calling rc_package_app. If it fails, read the errors, fix the code, and retry.
+
+6. SUMMARIZE what was created and tell the user: "Run `rc-apps deploy` to deploy to your server."
+
+─── FEATURE MAP (natural language → RC feature) ───
+
+When the user says...              → Build this RC feature
+─────────────────────────────────────────────────────────
+"command" / "type something"       → Slash command
+"form" / "input" / "collect info"  → UIKit modal (triggered by a slash command)
+"remember" / "save" / "store"      → Persistence (RocketChatAssociationRecord)
+"receive from outside" / "webhook" → API endpoint (IApiEndpoint)
+"call api" / "fetch" / "send to"   → IHttp (+ Settings for API keys/URLs)
+"when someone joins" / "welcome"   → Event listener (IPostRoomUserJoined)
+"when a message is sent"           → Event listener (IPostMessageSent)
+"scheduled" / "every day" / "cron" → Scheduler (IProcessor)
+"settings" / "config" / "api key"  → App Settings (SettingType)
+"button" / "action" / "click"      → UIKit action handler
+
+─── TYPE REFERENCE MAP ───
+
+When writing code, look up the actual interfaces from the app's node_modules.
+Read the .d.ts files to get exact method signatures — never guess.
+
+Feature              → Read this file (inside node_modules/@rocket.chat/apps-engine/definition/)
+─────────────────────────────────────────────────────────────────────────────────────────────────
+Main App class       → App.d.ts (in parent: @rocket.chat/apps-engine/definition/App)
+Accessors            → accessors/index.d.ts (IRead, IModify, IHttp, IPersistence, IConfigurationExtend)
+Slash command        → slashcommands/ISlashCommand.d.ts, slashcommands/SlashCommandContext.d.ts
+UIKit surface/modal  → uikit/IUIKitSurface.d.ts, uikit/IUIKitView.d.ts
+UIKit actions        → uikit/IUIKitActionHandler.d.ts, uikit/UIKitInteractionContext.d.ts
+UIKit blocks         → uikit/blocks/ (explore directory for available block types)
+API endpoints        → api/IApiEndpoint.d.ts, api/IRequest.d.ts, api/IResponse.d.ts
+Messages             → messages/IMessage.d.ts, messages/IPostMessageSent.d.ts
+Message events       → messages/IPreMessageSentPrevent.d.ts, messages/IPreMessageSentModify.d.ts
+Room events          → rooms/IPostRoomUserJoined.d.ts, rooms/IPostRoomUserLeave.d.ts, rooms/IRoomUserJoinedContext.d.ts
+Room types           → rooms/IRoom.d.ts, rooms/RoomType.d.ts
+Persistence          → persistence/IPersistenceItem.d.ts
+Metadata             → metadata/ (RocketChatAssociationModel, RocketChatAssociationRecord, IAppInfo)
+Settings             → settings/ISetting.d.ts, settings/SettingType.d.ts
+Scheduler            → scheduler/ (IProcessor)
+HTTP types           → accessors/IHttp.d.ts
+
+If a file isn't in this map, use `ls` on the relevant definition/ subdirectory to find it.
+
+─── RULES ───
+
+- Use `rc-apps create` to scaffold — never manually create app.json/tsconfig/package.json.
+- Read .d.ts files from the app's node_modules before writing code to get accurate types.
+- NEVER use console.log — use this.getLogger() or the injected logger.
+- NEVER import Node.js built-ins (fs, path, http) — they're unavailable in the RC sandbox.
+- ALWAYS register features in extendConfiguration.
+- ALWAYS use RocketChatAssociationRecord for persistence — never plain string keys.
+- The triggerId is required to open modals — always check it exists.
+"""

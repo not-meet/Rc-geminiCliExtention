@@ -1,0 +1,28 @@
+  {
+    "name": "rc-app-gemini",
+    "version": "0.1.0",
+    "description": "Gemini CLI extension to scaffold and validate Rocket.Chat Apps with natural language",
+    "type": "module",
+    "main": "dist/mcp-server.js",
+    "scripts": {
+      "build": "tsc",
+      "dev": "tsc --watch",
+      "start": "node dist/mcp-server.js"
+    },
+    "keywords": [
+      "gemini-cli",
+      "rocketchat",
+      "mcp",
+      "extension"
+    ],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+      "@modelcontextprotocol/sdk": "^1.27.1",
+      "zod": "^3.25.0"
+    },
+    "devDependencies": {
+      "typescript": "^5.0.0",
+      "@types/node": "^20.0.0"
+    }
+  }

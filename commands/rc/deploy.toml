@@ -1,0 +1,13 @@
+description = "Package and deploy the current Rocket.Chat App"
+
+prompt = """
+The user wants to package/deploy their RC App:
+
+{{args}}
+
+Steps:
+1. Find the project root — look for app.json in the current directory or parent directories.
+2. Call rc-apps package to build the .zip.
+3. If packaging succeeds, tell the user: "App packaged! To deploy, run: `rc-apps deploy --url <server-url> --username <admin-user> --password <password>`"
+4. If it fails, read the error output, fix the broken code, and retry rc_package_app. Repeat until it passes.
+"""
