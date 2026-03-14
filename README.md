@@ -52,7 +52,7 @@ gemini extensions link .
 
 ## Usage
 
-### Create a new app
+### Create a new app with slash commands
 ```
 /rc:new I want a bot that replies when someone mentions me
 /rc:new make a bot that tells jokes when asked
