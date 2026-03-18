@@ -5,6 +5,10 @@ The user wants to build a Rocket.Chat App. Their description:
 
 {{args}}
 
+─── CRITICAL ───
+
+Do NOT create the project directory yourself. `rc-apps create` creates it. Running mkdir then create inside it produces a broken nested folder.
+
 ─── YOUR APPROACH ───
 
 1. UNDERSTAND what they want. If the description is vague (e.g. "stock price app", "welcome bot"), that's fine — use the feature map below to figure out what RC features are needed. Only ask follow-up questions in simple, non-technical language if you truly cannot guess the app's purpose. Example questions:
@@ -22,15 +26,30 @@ The user wants to build a Rocket.Chat App. Their description:
 3. WAIT for confirmation. Only start coding after a positive reply.
 
 4. BUILD the app:
-   a. Run `rc-apps create --name="<name>" --description="<desc>" --author="<name>"` in the current directory.
+   a. Run `rc-apps create --name="<name>" --description="<desc>" --author="<name>"` in the CURRENT directory.
       For author: use the authenticated Gemini user's name. If unavailable, use "Developer".
    b. Run `npm install` in the created project directory.
    c. Write all the code — slash commands, modals, endpoints, event handlers, persistence, settings — whatever the app needs.
+      Use the relevant skills for each feature — they contain RC-specific corrections to avoid silent bugs.
    d. Register everything in `extendConfiguration` in the main App class.
 
-5. VERIFY by calling rc_package_app. If it fails, read the errors, fix the code, and retry.
+5. REVIEW the code before packaging. Go through the rc-review checklist to catch silent runtime bugs, infinite loops, sandbox violations, and missing registrations. Fix anything that fails the checklist.
 
-6. SUMMARIZE what was created and tell the user: "Run `rc-apps deploy` to deploy to your server."
+6. PACKAGE by calling rc_package_app. If it fails, read the errors, fix the code, and retry.
+
+7. SUMMARIZE what was created and tell the user:
+
+   "✅ App built and packaged!
+
+   To upload your app:
+   1. Open your Rocket.Chat Admin Panel
+   2. Go to **Marketplace → Private Apps** (http://localhost:3000/marketplace/private/list — adjust the host/port to your server)
+   3. Click **Upload Private App**
+   4. Select the generated .zip file
+   5. Click **Install**
+
+   Or deploy via CLI:
+   `rc-apps deploy --url <server-url> --username <admin-user> --password <password>`"
 
 ─── FEATURE MAP (natural language → RC feature) ───
 
@@ -46,32 +65,6 @@ When the user says...              → Build this RC feature
 "scheduled" / "every day" / "cron" → Scheduler (IProcessor)
 "settings" / "config" / "api key"  → App Settings (SettingType)
 "button" / "action" / "click"      → UIKit action handler
-
-─── TYPE REFERENCE MAP ───
-
-When writing code, look up the actual interfaces from the app's node_modules.
-Read the .d.ts files to get exact method signatures — never guess.
-
-Feature              → Read this file (inside node_modules/@rocket.chat/apps-engine/definition/)
-─────────────────────────────────────────────────────────────────────────────────────────────────
-Main App class       → App.d.ts (in parent: @rocket.chat/apps-engine/definition/App)
-Accessors            → accessors/index.d.ts (IRead, IModify, IHttp, IPersistence, IConfigurationExtend)
-Slash command        → slashcommands/ISlashCommand.d.ts, slashcommands/SlashCommandContext.d.ts
-UIKit surface/modal  → uikit/IUIKitSurface.d.ts, uikit/IUIKitView.d.ts
-UIKit actions        → uikit/IUIKitActionHandler.d.ts, uikit/UIKitInteractionContext.d.ts
-UIKit blocks         → uikit/blocks/ (explore directory for available block types)
-API endpoints        → api/IApiEndpoint.d.ts, api/IRequest.d.ts, api/IResponse.d.ts
-Messages             → messages/IMessage.d.ts, messages/IPostMessageSent.d.ts
-Message events       → messages/IPreMessageSentPrevent.d.ts, messages/IPreMessageSentModify.d.ts
-Room events          → rooms/IPostRoomUserJoined.d.ts, rooms/IPostRoomUserLeave.d.ts, rooms/IRoomUserJoinedContext.d.ts
-Room types           → rooms/IRoom.d.ts, rooms/RoomType.d.ts
-Persistence          → persistence/IPersistenceItem.d.ts
-Metadata             → metadata/ (RocketChatAssociationModel, RocketChatAssociationRecord, IAppInfo)
-Settings             → settings/ISetting.d.ts, settings/SettingType.d.ts
-Scheduler            → scheduler/ (IProcessor)
-HTTP types           → accessors/IHttp.d.ts
-
-If a file isn't in this map, use `ls` on the relevant definition/ subdirectory to find it.
 
 ─── RULES ───
 
