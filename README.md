@@ -1,68 +1,115 @@
-# 🚀 RC App Generator  Gemini CLI Extension
+<p align="center">
+  <img src="https://rocket.chat/wp-content/uploads/2024/01/rocketchat-logo.svg" alt="Rocket.Chat" height="40" />
+  &nbsp;&nbsp;✦&nbsp;&nbsp;
+  <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690b6.svg" alt="Gemini" height="40" />
+</p>
 
-> Build Rocket.Chat Apps with plain English. No RC Apps Engine knowledge required.
+<h1 align="center">RC App Generator</h1>
 
-## What is this?
+<p align="center">
+  <strong>Gemini CLI extension that builds Rocket.Chat Apps from plain English.</strong><br/>
+  No Apps Engine knowledge required.
+</p>
 
-This is a [Gemini CLI](https://github.com/google-gemini/gemini-cli) extension that lets anyone — technical or not — create fully working Rocket.Chat Apps just by describing what they want.
-
-You don't need to know what a slash command is, what UIKit means, or how the Apps Engine works. Just describe your idea and the extension figures out the rest.
-
----
-
-## How it works
-
-```
-User describes their idea (plain English)
-            ↓
-Extension detects required RC features
-            ↓
-Presents a plain-English plan for confirmation
-            ↓
-Scaffolds the app with rc-apps create
-            ↓
-Reads live .d.ts interfaces from node_modules
-            ↓
-Writes all code + registers everything
-            ↓
-Packages into deployable .zip
-```
+<p align="center">
+  <a href="https://github.com/google-gemini/gemini-cli">Gemini CLI</a> · 
+  <a href="https://developer.rocket.chat/apps-engine">Apps Engine Docs</a> · 
+  <a href="https://www.npmjs.com/package/@rocket.chat/apps-cli">rc-apps CLI</a>
+</p>
 
 ---
 
-## Install
+### What it does
 
-**Requirements**
-- [Gemini CLI](https://github.com/google-gemini/gemini-cli) installed
-- [rc-apps CLI](https://www.npmjs.com/package/@rocket.chat/apps-cli) installed
-- Node.js v20 (v24 has known packaging issues)
+Describe what you want. The extension figures out the RC features, writes the code, and packages a `.zip` you can upload.
+
+```
+/rc:new a bot that tracks team mood with a /mood command and shows weekly stats
+```
+
+```
+Understand → Plan → Confirm → Scaffold → Code → Review → Package
+```
+
+No need to know what UIKit, `IPostMessageSent`, or `RocketChatAssociationRecord` means.
+
+---
+
+### Skills
+
+The extension uses on-demand skills — loaded only when relevant, not all at once.
+
+| Skill | Activates when you need |
+|---|---|
+| `rc-slash-command` | `/command` triggers |
+| `rc-message-listener` | Auto-replies, greetings, message reactions |
+| `rc-uikit-modal` | Forms, popups, buttons, interactive UI |
+| `rc-persistence` | Saving, storing, counting data |
+| `rc-webhook` | Incoming webhooks from external services |
+| `rc-http-outbound` | Calling external APIs |
+| `rc-scheduler` | Cron jobs, recurring tasks, reminders |
+| `rc-app-settings` | Admin settings, API keys, config |
+| `rc-review` | Final checklist before packaging |
+
+Each skill contains RC-specific corrections — things Gemini confidently gets wrong because of its general JS/TS knowledge. Not tutorials. Just the gaps between valid code and working RC code.
+
+---
+
+### Install
+
+**Requirements:** [Gemini CLI](https://github.com/google-gemini/gemini-cli) · [rc-apps CLI](https://www.npmjs.com/package/@rocket.chat/apps-cli) · Node.js v20
 
 ```bash
-# Install rc-apps CLI if you haven't
 npm install -g @rocket.chat/apps-cli
 
-# Clone and link the extension
-git clone https://github.com/your-username/rc-app-gemini
-cd rc-app-gemini
+git clone https://github.com/not-meet/rc-geminicliextention.git
+cd rc-geminicliextention
 npm install && npm run build
 gemini extensions link .
 ```
 
+Verify:
+
+```bash
+gemini extensions list    # should show rocketchat-app-generator
+```
+
 ---
 
-## Usage
+### Usage
 
-### Create a new app with slash commands
+**Create an app:**
+
 ```
 /rc:new I want a bot that replies when someone mentions me
-/rc:new make a bot that tells jokes when asked
-/rc:new give me stock prices via a command
-/rc:new make my team more productive
+/rc:new a welcome bot that greets new users and remembers their name
+/rc:new stock price checker with a /stock command and API key settings
 ```
 
-### Package and deploy
+**Package & deploy:**
+
 ```
 /rc:deploy
 ```
 
+After packaging, upload the `.zip`:
+
+1. Open **Admin Panel → Marketplace → Private Apps**
+2. Click **Upload Private App**
+3. Select the `.zip` → **Install**
+
 ---
+
+### How skills work
+
+Skills are **not** loaded all at once. Gemini reads only the `name` and `description` at session start. When it recognizes a matching task, it activates the skill and pulls in the full instructions.
+
+This means a simple `/rc:new hello world bot` only loads `rc-slash-command` — not all 9 skills.
+
+The `rc-review` skill activates after code is written, right before packaging. It catches silent bugs that compile fine but break at runtime.
+
+---
+
+### License
+
+MIT
