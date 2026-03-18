@@ -1,7 +1,7 @@
 <p align="center">
-  <img src="https://rocket.chat/wp-content/uploads/2024/01/rocketchat-logo.svg" alt="Rocket.Chat" height="40" />
+ <img width=30% src="https://github.com/user-attachments/assets/a92f27b9-5101-4725-8311-a0e6ada0edc7" alt="rocket-chat">
   &nbsp;&nbsp;✦&nbsp;&nbsp;
-  <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690b6.svg" alt="Gemini" height="40" />
+  <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/google-gemini.png" alt="Gemini" height="40" />
 </p>
 
 <h1 align="center">RC App Generator</h1>
@@ -22,10 +22,6 @@
 ### What it does
 
 Describe what you want. The extension figures out the RC features, writes the code, and packages a `.zip` you can upload.
-
-```
-/rc:new a bot that tracks team mood with a /mood command and shows weekly stats
-```
 
 ```
 Understand → Plan → Confirm → Scaffold → Code → Review → Package
