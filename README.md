@@ -56,11 +56,8 @@ Each skill contains RC-specific corrections — things Gemini confidently gets w
 **Requirements:** [Gemini CLI](https://github.com/google-gemini/gemini-cli) · [rc-apps CLI](https://www.npmjs.com/package/@rocket.chat/apps-cli) · Node.js v20
 
 ```bash
-npm install -g @rocket.chat/apps-cli
-
 git clone https://github.com/not-meet/rc-geminicliextention.git
 cd rc-geminicliextention
-npm install && npm run build
 gemini extensions link .
 ```
 

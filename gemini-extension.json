@@ -3,14 +3,5 @@
   "version": "0.1.0",
   "description": "Scaffold, generate, and validate Rocket.Chat Apps with natural language",
   "contextFileName": "GEMINI.md",
-  "skillsDir": "skills",
-  "mcpServers": {
-    "rocketchat-mcp": {
-      "command": "node",
-      "args": [
-        "${extensionPath}${/}dist${/}mcp-server.js"
-      ],
-      "cwd": "${extensionPath}"
-    }
-  }
+  "skillsDir": "skills"
 }
