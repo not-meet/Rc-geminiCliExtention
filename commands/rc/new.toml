@@ -33,7 +33,11 @@ Do NOT create the project directory yourself. `rc-apps create` creates it. Runni
       Use the relevant skills for each feature — they contain RC-specific corrections to avoid silent bugs.
    d. Register everything in `extendConfiguration` in the main App class.
 
-5. REVIEW the code before packaging. Go through the rc-review checklist to catch silent runtime bugs, infinite loops, sandbox violations, and missing registrations. Fix anything that fails the checklist.
+5. ⚠️ MANDATORY — REVIEW before packaging (DO NOT SKIP THIS STEP).
+   You MUST use the `rc-review` skill now. Load it and go through EVERY checklist item against the code you just wrote.
+   Print each checklist category and whether it passes or needs fixes.
+   If ANY item fails, fix the code BEFORE moving to step 6.
+   DO NOT call rc_package_app until this review is complete and all items pass.
 
 6. PACKAGE by calling rc_package_app. If it fails, read the errors, fix the code, and retry.
 
