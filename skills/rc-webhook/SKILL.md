@@ -5,18 +5,56 @@ description: Use when building a Rocket.Chat App that needs to receive data from
 
 # Skill: Webhook (API Endpoint)
 
-## RC-specific corrections
+## Steps
 
-- **Extend the base class, don't implement the raw interface.** Gemini implements `IApiEndpoint` directly and misses the `success()` and `json()` helpers. Extending `ApiEndpoint` gives you those for free.
+1. **Read the type definitions.**
+   Open these files in the scaffolded app's `node_modules/@rocket.chat/apps-engine/definition/`:
+   - `api/ApiEndpoint.d.ts` — the base class to extend.
+   - `api/IApiEndpointInfo.d.ts` — for request/response shapes.
 
-- **The endpoint class needs the App reference.** Gemini instantiates endpoints with `new MyEndpoint()`. RC requires `new MyEndpoint(this)` passing the App instance — without it, the endpoint silently fails.
+2. **Create the endpoint class by extending `ApiEndpoint`.**
+   ```ts
+   import { ApiEndpoint } from '@rocket.chat/apps-engine/definition/api';
 
-- **There is no built-in auth.** Gemini assumes RC validates incoming requests. The only security option is UNSECURE. If you need token validation, do it yourself inside the handler. The `authRequired` flag only leverages RC's own user auth system.
+   export class MyEndpoint extends ApiEndpoint {
+       public path = 'my-endpoint';
 
-- **Request headers are lowercase.** Gemini checks `request.headers['Content-Type']`. RC lowercases all header keys — use `request.headers['content-type']`.
+       public async post(request: IApiRequest, endpoint: IApiEndpointInfo, read: IRead, modify: IModify, http: IHttp, persis: IPersistence): Promise<IApiResponse> {
+           // Handle request
+           return this.success({ message: 'ok' });
+       }
+   }
+   ```
+   GATE: Are you implementing `IApiEndpoint` interface directly? Extend the `ApiEndpoint` base class instead — it gives you `this.success()` and `this.json()` helpers.
 
-- **The body is already parsed.** Gemini calls `JSON.parse(request.content)`. RC already parses JSON bodies into `request.content` as an object — double-parsing breaks it.
+3. **Instantiate with the App reference.**
+   When registering, pass `this` (the App instance):
+   ```ts
+   new MyEndpoint(this)
+   ```
+   GATE: Are you using `new MyEndpoint()` without arguments? The endpoint needs the App reference — without it, the endpoint silently fails.
 
-- **Disabled apps return 404 automatically.** Gemini adds custom "app disabled" error handling. RC handles this at the platform level — your handler code never runs when the app is off.
+4. **Handle the request body.**
+   - The request body is already parsed. `request.content` is an object for JSON bodies.
+   - GATE: Are you calling `JSON.parse(request.content)`? Remove it. Double-parsing breaks the data.
+   - Request headers are all lowercase: use `request.headers['content-type']`, not `request.headers['Content-Type']`.
 
-- **Private endpoint URLs include a random hash.** Gemini hardcodes the endpoint URL. Private endpoints have a server-generated hash segment that changes on reinstall — always surface the full URL to the user dynamically.
+5. **Handle authentication.**
+   - There is no built-in request validation. If you set `authRequired: true`, it uses RC's own user auth — external services can't use that.
+   - For external webhook senders: validate tokens/signatures yourself inside the handler (e.g., check a header against a stored secret).
+
+6. **Register the endpoint.**
+   In the main App class, inside `extendConfiguration()`:
+   ```ts
+   configuration.api.provideApi({ visibility: ApiVisibility.PUBLIC, security: ApiSecurity.UNSECURE, endpoints: [new MyEndpoint(this)] });
+   ```
+   GATE: Registered in `extendConfiguration`? Not in the constructor, not in `onEnable`.
+
+7. **Tell the user about the URL.**
+   - Public endpoints: `https://<server>/api/apps/public/<app-id>/<path>`
+   - Private endpoints include a server-generated hash that changes on reinstall — do not hardcode the URL. Surface it dynamically.
+
+8. **Verify.**
+   - Grep for `JSON.parse(request.content)` → remove double-parsing.
+   - Grep for `console.log` → replace with `this.getLogger()`.
+   - Confirm endpoint class is instantiated with `this` (App reference).

@@ -5,16 +5,39 @@ description: Use when building a Rocket.Chat App that needs a slash command — 
 
 # Skill: Slash Command
 
-## RC-specific corrections
+## Steps
 
-- **Arguments have no quoting support.** Gemini assumes shell-style quoting works. RC splits on raw whitespace — `"hello world"` becomes two args, not one. Join them back if you need the full string.
+1. **Read the type definition.**
+   Open `node_modules/@rocket.chat/apps-engine/definition/slashcommands/ISlashCommand.d.ts` in the scaffolded app. Confirm the method signatures before writing any code.
 
-- **Preview requires both methods.** Gemini sets `providesPreview: true` but only implements `previewer()`. RC silently does nothing when a preview item is clicked unless `executePreviewItem()` also exists. And when a preview item IS selected, `executor()` is never called — only `executePreviewItem()` runs.
+2. **Create the command class.**
+   Create a new file in the project (e.g., `commands/MyCommand.ts`). The class implements `ISlashCommand`.
+   - Set `command` to a **namespaced** name: `appname-cmdname` (e.g., `stockbot-price`).
+   - GATE: Is the command name unique and prefixed with the app name? Generic names like `help`, `status`, `info` collide with built-ins and other apps — always namespace.
 
-- **Preview items are hard-capped at 10.** RC silently discards extras with no warning.
+3. **Decide on preview support.**
+   - If the user did NOT ask for preview results → set `providesPreview: false`. Skip to step 5.
+   - If the user asked for preview → set `providesPreview: true` and continue to step 4.
 
-- **Command names collide silently.** Gemini picks generic names like `help` or `status`. RC throws `CommandAlreadyExistsError` if any other app or built-in uses that name. Always namespace: `myapp-help`.
+4. **Implement preview (only if step 3 requires it).**
+   a. Implement `previewer()` — return a list of preview items. Maximum 10 items — extras are silently discarded.
+   b. Implement `executePreviewItem()` — this runs when the user clicks a preview item.
+   c. GATE: Both `previewer()` AND `executePreviewItem()` must exist. Without `executePreviewItem()`, clicking a preview item does nothing silently. Note: `executor()` is NOT called when a preview item is selected — only `executePreviewItem()` runs.
 
-- **The trigger ID expires fast.** Gemini awaits an HTTP call, then tries to open a modal. By then the trigger ID has expired server-side. Open the modal first, fetch data after.
+5. **Write the executor.**
+   Implement `executor()` for the main command logic.
+   - **Arguments:** RC splits on raw whitespace. `"hello world"` becomes two args, not one. If you need the full string, join the args array back together.
+   - **User-only responses:** Use the notifier (`modify.getNotifier().notifyUser()`) for messages only the sender should see. Do NOT use the message creator — those are persistent and visible to everyone and trigger message hooks.
+   - **Opening a modal:** If this command opens a modal, call the modal open FIRST, before any async I/O (HTTP calls, persistence reads). The trigger ID expires in seconds — awaiting slow operations first causes silent failure.
 
-- **Ephemeral vs persistent messages are different APIs.** Gemini uses the message creator for everything. Use the notifier for messages only the sender should see — they are not stored and don't trigger hooks.
+6. **Register the command.**
+   In the main App class, inside `extendConfiguration()`:
+   ```ts
+   configuration.slashCommands.provideSlashCommand(new MyCommand(this));
+   ```
+   GATE: Is the command registered in `extendConfiguration`? Not in the constructor, not in `onEnable` — only in `extendConfiguration`.
+
+7. **Verify.**
+   - Grep for `console.log` → replace with `this.getLogger()`.
+   - Grep for `http.delete` → rename to `http.del`.
+   - Confirm the command file is imported in the main App file.

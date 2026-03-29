@@ -5,22 +5,56 @@ description: Use when building a Rocket.Chat App that needs scheduled, recurring
 
 # Skill: Scheduler
 
-## RC-specific corrections
+## Steps
 
-- **Scheduling is two-phase, not one.** Gemini tries to schedule a job inline. RC requires you to register a processor at startup in `extendConfiguration`, THEN trigger it at runtime via `modify.getScheduler()`. Skipping registration means the schedule call is silently ignored.
+1. **Read the type definitions.**
+   Open these files in the scaffolded app's `node_modules/@rocket.chat/apps-engine/definition/`:
+   - `scheduler/IProcessor.d.ts` — for the processor interface.
+   - `accessors/ISchedulerModify.d.ts` — for runtime scheduling methods.
+   - `accessors/IOnetimeSchedule.d.ts` and `IRecurringSchedule.d.ts` — for schedule descriptor shapes.
+   Note: The field that links a schedule to its processor is `id`, NOT `processorId` or `jobId`.
 
-- **Unregistered processor IDs fail silently.** Gemini typos or forgets to register the processor. RC doesn't throw — the job just never runs.
+2. **Create the processor class.**
+   Implement `IProcessor` with a unique `id` string and a `processor()` method:
+   ```ts
+   export class MyProcessor implements IProcessor {
+       id = 'my-unique-processor-id';
+       async processor(jobContext: Record<string, any>, read: IRead, modify: IModify, http: IHttp, persis: IPersistence): Promise<void> {
+           // Job logic here
+       }
+   }
+   ```
+   - The `jobContext` is a plain free-form object — it only contains what you put in the `data` field when scheduling. Do not expect structured fields like `jobContext.room` unless you explicitly set them.
 
-- **Recurring jobs fire immediately by default.** Gemini sets an interval expecting it to wait. RC runs the processor immediately on first registration unless you explicitly set skip-immediate to true.
+3. **Register the processor at startup.**
+   In the main App class, inside `extendConfiguration()`:
+   ```ts
+   configuration.scheduler.registerProcessors([new MyProcessor()]);
+   ```
+   GATE: Is the processor registered in `extendConfiguration`? Not in the constructor, not in `onEnable`. Unregistered processor IDs fail silently — the job just never runs.
+   GATE: The configuration-phase scheduler accessor is a direct property on `configuration`, not a getter method. Read `IConfigurationModify.d.ts` to confirm the access pattern.
 
-- **Same-ID recurring schedule replaces the previous one.** Gemini schedules multiple recurring jobs with the same processor ID expecting them to stack. Each new schedule replaces the last.
+4. **Schedule the job at runtime.**
+   Use `modify.getScheduler()` to trigger jobs (e.g., from a slash command, event handler, or `onEnable`):
+   - **One-time:**
+     ```ts
+     await modify.getScheduler().scheduleOnce({ id: 'my-unique-processor-id', when: new Date(Date.now() + 60000), data: { roomId: room.id } });
+     ```
+   - **Recurring:**
+     ```ts
+     await modify.getScheduler().scheduleRecurring({ id: 'my-unique-processor-id', interval: '0 9 * * *' });
+     ```
+   GATE: Does the `id` in the schedule descriptor exactly match the processor's `id`? A typo means the job silently never runs.
 
-- **Disabled apps skip jobs silently.** Gemini adds error handling for "job failed while app disabled." RC just skips the job with no error or callback.
+5. **Handle recurring job behavior.**
+   - Recurring jobs fire immediately on first registration by default. Set `skipImmediate: true` if you want to wait for the first interval.
+   - Scheduling a recurring job with the same processor ID replaces the previous schedule — they do not stack.
 
-- **The job context is whatever you passed in.** Gemini tries to access structured fields like `jobContext.room`. The context is a plain free-form object — it only contains what you put in the `data` field when scheduling.
+6. **Prevent re-scheduling loops.**
+   If the processor calls `scheduleOnce` on itself:
+   GATE: Is there a termination condition? Without one, the job runs forever.
 
-- **Don't create re-scheduling loops.** Gemini writes a processor that calls `scheduleOnce` on itself. Without a termination condition, this runs forever.
-
-- **The schedule descriptor field is `id`, not `processorId`.** Gemini invents descriptive names like `processorId` or `jobId`. The actual field that links a schedule to its processor is just `id`. Read `IOnetimeSchedule.d.ts` and `IRecurringSchedule.d.ts` to confirm.
-
-- **Startup-phase and runtime accessors use different patterns.** Gemini uses `configurationModify.getScheduler()` by analogy with `modify.getScheduler()`. The configuration-phase accessor is a direct property, not a getter method. Read `IConfigurationModify.d.ts` to get the correct access pattern.
+7. **Verify.**
+   - Grep for `console.log` → replace with `this.getLogger()`.
+   - Confirm processor ID string matches between registration and scheduling.
+   - Confirm processor is registered in `extendConfiguration`, not elsewhere.
