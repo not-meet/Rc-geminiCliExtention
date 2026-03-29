@@ -28,6 +28,7 @@ description: Use when building a Rocket.Chat App that needs a form, popup, modal
    Implement `executeViewSubmitHandler()` on the App class.
    - Read submitted values from `view.state[blockId][actionId]` — values are nested two levels deep (block first, then action).
    - GATE: Are you reading `view.state[actionId]` directly? That's wrong. It's always `view.state[blockId][actionId]`.
+   - GATE: Wrap all async operations in executeViewSubmitHandler in try/catch and log with this.getLogger() — any unhandled exception silently freezes the modal open with no error shown to the user.
 
 5. **Handle block actions (if needed).**
    If any element triggers a live action (e.g., button click, overflow menu):
